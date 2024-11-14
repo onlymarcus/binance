@@ -34,13 +34,19 @@ async def get_binance_data(binance, symbol):
 async def filter_symbols_by_daily_volume(binance, min_volume):
     logging.info(f"Filtrando símbolos com volume diário maior que {min_volume}")
     tickers = await binance.fetch_tickers()
-    symbols = [symbol for symbol, ticker in tickers.items() if ticker['quoteVolume'] > min_volume and symbol.endswith('/USDT')]
+    stablecoins = ["USDT", "BUSD", "USDC", "FDUSD", "TUSD", "DAI"]
+    symbols = [
+        symbol for symbol, ticker in tickers.items()
+        if ticker['quoteVolume'] > min_volume 
+        and symbol.endswith('/USDT')
+        and not any(stablecoin + '/USDT' == symbol for stablecoin in stablecoins)
+    ]
     logging.info(f"Símbolos filtrados: {symbols}")
     return symbols
 
 # Função principal para monitorar o ATH
 async def monitor_ath():
-    min_daily_volume = 50_000_000  # Volume diário mínimo de 50 milhões de USDT
+    min_daily_volume = 4_000_000  # Volume diário mínimo de 4 milhões de USDT (PEPE 4,5M)
     binance = ccxt.binance()
     
     while True:
@@ -57,21 +63,21 @@ async def monitor_ath():
                 ath_price = ticker['high']
                 
                 # Considerando que o ATH é o maior valor histórico registrado
-                if current_price >= 0.99 * ath_price:
+                if current_price >= 0.98 * ath_price:
                     now = datetime.now()
                     ath_time = datetime.fromtimestamp(ticker['timestamp'] / 1000)
                     
                     if current_price > ath_price and (now - ath_time) < timedelta(hours=1):
                         passed_ath_symbols.append(
                             f"{symbol} acabou de ultrapassar o ATH!\n"
-                            f"ATH anterior: {ath_price:.2f} USDT\n"
-                            f"Preço atual: {current_price:.2f} USDT"
+                            f"ATH anterior: {ath_price:.8f} USDT\n"
+                            f"Preço atual: {current_price:.8f} USDT"
                         )
                     else:
                         near_ath_symbols.append(
-                            f"{symbol} está a 1% de atingir o ATH!\n"
-                            f"ATH anterior: {ath_price:.2f} USDT\n"
-                            f"Preço atual: {current_price:.2f} USDT"
+                            f"{symbol} está a 2% ou menos de atingir o ATH!\n"
+                            f"ATH anterior: {ath_price:.8f} USDT\n"
+                            f"Preço atual: {current_price:.8f} USDT"
                         )
                 
             except Exception as e:
