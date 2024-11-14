@@ -1,0 +1,4 @@
+Primeiro comecei com o volume.py depois aperfeiçoei com monitor_agression.py e mudei para monitor_agression_dynamodb.py
+
+A ideia é criar o script só para salvar os dados no dynamodb e depois usar os dados para fazer as análises de variação de agressão
+Futuramente posso usar os dados para algoritmo de inteligencia artificial
