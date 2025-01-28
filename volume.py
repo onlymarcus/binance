@@ -68,7 +68,7 @@ async def monitor_volume():
 
         # Enviar uma única mensagem com os resultados
         if results:
-            message = "Search result:\n"
+            message = "результат поиска / Search result:\n"
             for result in results:
                 message += result + "\n"
             await send_telegram_message(message)
@@ -99,9 +99,9 @@ async def process_symbol(binance, symbol, timeframe_15m, timeframe_1m, limit, re
         # Verificar se o módulo do saldo do último minuto é superior a 80% do módulo do saldo dos últimos 15 minutos
         if abs(volume_balance_1m) > 0.8 * abs(volume_balance_15m):
             if volume_balance_1m > 0:
-                alert_message = "Alert! High volume purchase (Compra forte)"
+                alert_message = "сильная покупка / Strong Buy"
             else:
-                alert_message = "Alert! High volume sales(Venda forte)"
+                alert_message = "Сильная продажа / Strong sell"
             quantidade = abs(volume_balance_1m / df_1m['close'].iloc[-1])
             valor = abs(volume_balance_1m)
             preco_medio = valor / quantidade
@@ -109,9 +109,9 @@ async def process_symbol(binance, symbol, timeframe_15m, timeframe_1m, limit, re
             logging.info(f"{alert_message} para {symbol}")
             result_message = (
                 f"{alert_message}: {symbol}\n"
-                f"Quantity: {quantidade:,.2f} {symbol.split('/')[0]}\n"
-                f"Value: {valor:,.2f} USDT\n"
-                f"Average Price: {preco_medio:,.8f} USDT\n"
+                f"Количество / Quantity: {quantidade:,.2f} {symbol.split('/')[0]}\n"
+                f"Стоимость  / Value: {valor:,.2f} USDT\n"
+                f"Средняя цена / Average Price: {preco_medio:,.8f} USDT\n"
             )
             results.append(result_message)
         else:
