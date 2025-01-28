@@ -14,15 +14,19 @@ logging.basicConfig(level=logging.INFO)
 dotenv.load_dotenv()
 CHAVE_API = getenv("CHAVE_API")
 CHANNEL_ID = getenv("CHANNEL_ID")
+CHANNEL_IDB = getenv("CHANNEL_IDB")
 bot = telebot.TeleBot(CHAVE_API, parse_mode=None)
 
 # Função para enviar mensagem para o Telegram de forma assíncrona
-async def send_telegram_message(message, chat_id=CHANNEL_ID):
+# Função para enviar mensagem para o Telegram de forma assíncrona
+async def send_telegram_message(message, chat_ids=[CHANNEL_ID, CHANNEL_IDB]):
     try:
-        bot.send_message(chat_id, message)
-        logging.info(f"Mensagem enviada: {message}")
+        for chat_id in chat_ids:
+            bot.send_message(chat_id, message)
+            logging.info(f"Mensagem enviada para o chat {chat_id}: {message}")
     except Exception as e:
         logging.error(f"Erro ao enviar mensagem: {e}")
+
 
 # Função para obter dados da Binance de forma assíncrona
 async def get_binance_data(binance, symbol, timeframe, limit):
@@ -64,12 +68,12 @@ async def monitor_volume():
 
         # Enviar uma única mensagem com os resultados
         if results:
-            message = "Resultado da Pesquisa:\n"
+            message = "Search result:\n"
             for result in results:
                 message += result + "\n"
             await send_telegram_message(message)
         else:
-            logging.info("Nenhuma recomendação de compra ou venda forte encontrada nesta rodada.")
+            logging.info("no recommendations at the last minute.")
 
         # Aguardar 5 minutos antes da próxima verificação
         logging.info("Aguardando 1 minutos para a próxima rodada de verificação")
@@ -95,9 +99,9 @@ async def process_symbol(binance, symbol, timeframe_15m, timeframe_1m, limit, re
         # Verificar se o módulo do saldo do último minuto é superior a 80% do módulo do saldo dos últimos 15 minutos
         if abs(volume_balance_1m) > 0.8 * abs(volume_balance_15m):
             if volume_balance_1m > 0:
-                alert_message = "COMPRA FORTE"
+                alert_message = "Alert! High volume purchase (Compra forte)"
             else:
-                alert_message = "VENDA FORTE"
+                alert_message = "Alert! High volume sales(Venda forte)"
             quantidade = abs(volume_balance_1m / df_1m['close'].iloc[-1])
             valor = abs(volume_balance_1m)
             preco_medio = valor / quantidade
@@ -105,9 +109,9 @@ async def process_symbol(binance, symbol, timeframe_15m, timeframe_1m, limit, re
             logging.info(f"{alert_message} para {symbol}")
             result_message = (
                 f"{alert_message}: {symbol}\n"
-                f"Quantidade: {quantidade:,.2f} {symbol.split('/')[0]}\n"
-                f"Valor: {valor:,.2f} USDT\n"
-                f"Preço Médio: {preco_medio:,.8f} USDT\n"
+                f"Quantity: {quantidade:,.2f} {symbol.split('/')[0]}\n"
+                f"Value: {valor:,.2f} USDT\n"
+                f"Average Price: {preco_medio:,.8f} USDT\n"
             )
             results.append(result_message)
         else:
