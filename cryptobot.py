@@ -10,14 +10,18 @@ from aiogram.utils import executor
 import ccxt
 from cachetools import TTLCache
 import requests
+import dotenv
+from os import getenv
 
 # Configuração do logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 # Inicializa o bot do Telegram
-API_TOKEN = "7576886054:AAF4ct9NvH81Us7k05d3LSXO6zrolJW-oC0"
-bot = Bot(token=API_TOKEN)
+
+dotenv.load_dotenv()
+CHAVE_API = getenv("API_TOKEN")
+bot = Bot(token=CHAVE_API)
 dp = Dispatcher(bot)
 
 # Inicializa a exchange Binance
