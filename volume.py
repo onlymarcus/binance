@@ -17,6 +17,16 @@ CHANNEL_ID = getenv("CHANNEL_ID")
 CHANNEL_IDB = getenv("CHANNEL_IDB")
 bot = telebot.TeleBot(CHAVE_API, parse_mode=None)
 
+# Inicializa a exchange Binance
+async def get_exchange():
+    """Retorna uma instância da exchange Binance (versão assíncrona)."""
+    return ccxt.binance()
+
+async def close_exchange(exchange):
+    """Fecha corretamente a instância da exchange."""
+    if exchange:
+        await exchange.close()
+
 # Função para enviar mensagem para o Telegram de forma assíncrona
 async def send_telegram_message(message, chat_ids=[CHANNEL_ID, CHANNEL_IDB]):
     try:
@@ -46,35 +56,38 @@ async def filter_symbols_by_daily_volume(binance, min_volume):
 
 # Função principal para monitorar o volume
 async def monitor_volume():
-    min_daily_volume = 100_000_000  # Volume diário mínimo de 100 milhões de USDT
+    min_daily_volume = 200_000_000  # Volume diário mínimo de 100 milhões de USDT
     timeframe_15m = '15m'
     timeframe_1m = '1m'
     limit = 3  # Limite para obter dados das últimas velas
 
-    binance = ccxt.binance()
-
     while True:
-        logging.info("Iniciando nova rodada de monitoramento de volume")
-        symbols = await filter_symbols_by_daily_volume(binance, min_daily_volume)
+        binance = await get_exchange()
+        try:
+            logging.info("Iniciando nova rodada de monitoramento de volume")
+            symbols = await filter_symbols_by_daily_volume(binance, min_daily_volume)
 
-        tasks = []
-        results = []
-        for symbol in symbols:
-            tasks.append(process_symbol(binance, symbol, timeframe_15m, timeframe_1m, limit, results))
+            tasks = []
+            results = []
+            for symbol in symbols:
+                tasks.append(process_symbol(binance, symbol, timeframe_15m, timeframe_1m, limit, results))
 
-        # Executa todas as tarefas de forma assíncrona
-        await asyncio.gather(*tasks)
+            # Executa todas as tarefas de forma assíncrona
+            await asyncio.gather(*tasks)
 
-        # Enviar uma única mensagem com os resultados
-        if results:
-            message = "результат поиска / Search result:\n"
-            for result in results:
-                message += result + "\n"
-            await send_telegram_message(message)
-        else:
-            logging.info("no recommendations at the last minute.")
+            # Enviar uma única mensagem com os resultados
+            if results:
+                message = "результат поиска / Search result:\n"
+                for result in results:
+                    message += result + "\n"
+                await send_telegram_message(message)
+            else:
+                logging.info("no recommendations at the last minute.")
+        finally:
+            await close_exchange(binance)
 
-        # Aguardar 5 minutos antes da próxima verificação
+
+        # Aguardar 1 minutos antes da próxima verificação
         logging.info("Aguardando 1 minutos para a próxima rodada de verificação")
         await asyncio.sleep(60)
 
@@ -96,7 +109,7 @@ async def process_symbol(binance, symbol, timeframe_15m, timeframe_1m, limit, re
         volume_balance_1m = buy_volume_1m - sell_volume_1m
 
         # Verificar se o módulo do saldo do último minuto é superior a 80% do módulo do saldo dos últimos 15 minutos
-        if abs(volume_balance_1m) > 0.8 * abs(volume_balance_15m):
+        if abs(volume_balance_1m) > 2 * abs(volume_balance_15m):
             if volume_balance_1m > 0:
                 alert_message = "сильная покупка / Strong Buy"
             else:
