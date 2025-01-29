@@ -18,7 +18,6 @@ CHANNEL_IDB = getenv("CHANNEL_IDB")
 bot = telebot.TeleBot(CHAVE_API, parse_mode=None)
 
 # Função para enviar mensagem para o Telegram de forma assíncrona
-# Função para enviar mensagem para o Telegram de forma assíncrona
 async def send_telegram_message(message, chat_ids=[CHANNEL_ID, CHANNEL_IDB]):
     try:
         for chat_id in chat_ids:
